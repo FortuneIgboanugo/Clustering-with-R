@@ -1,0 +1,111 @@
+TITLE:
+This study necessitates the creation of a customer groups in order to outline the business approach. 
+The Dataset summarises the usage behaviour of over 5000 active credit card users over the previous six months. 
+The file contains 5 variables at the consumer level. 
+
+ABSTRACT:
+K-Means Clustering is an unsupervised learning approach used in data science 
+and machine learning to solve clustering challenges. 
+It's an iterative technique that splits an unorganized dataset into k clusters, 
+with every dataset belonging to just a group with common qualities.
+This dataset (CC GENERAL) has 5 variables namely, Balance, Purchase, Instalment Purchases, Cash Advance 
+and Credit limit. It has 5000 rows and 6 columns.
+It shows what most users do with their active credit cards 
+and in this study we’ll try to categorize into different group of clusters.  
+
+#install packages
+
+install.packages('VIM')
+library(VIM)
+install.packages('cluster')
+library(cluster)
+install.packages('tidyverse')
+library(tidyverse)
+install.packages('ggrepel')
+library(ggrepel)
+install.packages('plotly')
+library(plotly)
+install.packages('factoextra')
+library(factoextra)
+install.packages('skimr')
+library(skimr)
+install.packages('GGally')
+library(GGally)
+install.packages('janitor')
+library(janitor)
+install.packages("caret")
+library(caret)
+
+
+credit_data <- read.csv("CC GENERAL.csv",header = T)
+
+#inspect the dataset
+
+names(credit_data)
+head(elect_data)
+tail(elect_data)
+str(elect_data)
+summary(elect_data)
+dim(elect_data)
+
+#rename variables
+
+credit_data <- credit_data %>%
+  janitor::clean_names()
+
+#inspect new names
+names(credit_data)
+
+
+#check for missing values
+skim(credit_data)
+
+#drop rows with missing data
+credit_data <- credit_data[!is.na(credit_data$credit_limit),]
+
+#check for missing values
+skim(credit_data)
+
+#check data for outliers
+boxplot(credit_data[2:6])
+
+#remove nonnumerical value
+
+cust_id<- credit_data[,1]
+row.names(credit_data) <- cust_id
+credit_data$cust_id<- NULL
+
+#normalize the data
+
+prep_credit_data <- preProcess(credit_data,method = 'range')
+credit_data<- predict(prep_credit_data,credit_data)
+
+#calculate clustering tendency
+
+credit_clust_tend <- get_clust_tendency(credit_data,n = 5, graph = T)
+credit_clust_tend$hopkins_stat
+
+#calculate number of clusters
+fviz_nbclust(credit_data,kmeans,method = 'wss')
+
+#create cluster withkmeans
+
+credit_data_clust<- kmeans(credit_data,3)
+credit_data_clust
+
+credit_data_clust$cluster
+
+credit_data_clust$size
+
+#visualize cluster
+clusplot(credit_data,credit_data_clust$cluster,color = T, shade = T,lines = 0)
+
+fviz_cluster(credit_data_clust,credit_data)
+
+credit_data$cluster <- credit_data_clust$cluster
+
+credit_clust<- ggparcoord(data = credit_data, groupColumn = 'cluster',
+                          scale = 'std')+labs(x = 'customer',
+                                              y = 'value',
+                                              title = 'clustering of customer credit')
+ggplotly(credit_clust, color = 'cluster')
